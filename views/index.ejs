@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">NeoDex</h1>
+                <p class="tagline">A modern, fan-made Pokédex built with Node.js and PokeAPI.</p>
+            </div>
+        </header>
+
+        <!-- Search & Filter Bar -->
+        <div class="controls-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-box" 
+                    placeholder="🔍 Search by name or ID..."
+                >
+            </div>
+
+            <div class="filters-container">
+                <select id="typeFilter" class="filter-select">
+                    <option value="">All Types</option>
+                </select>
+
+                <select id="sortSelect" class="filter-select">
+                    <option value="id">Pokédex #</option>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="stats">Base Stats (Highest)</option>
+                </select>
+            </div>
+
+            <button id="favoritesBtn" class="favorites-btn">
+                ⭐ Favorites (<span id="favoriteCount">0</span>)
+            </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading Pokédex...</p>
+        </div>
+
+        <!-- Pokémon Grid -->
+        <div id="pokemonGrid" class="pokemon-grid"></div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination">
+            <button id="prevBtn" class="pagination-btn" disabled>← Previous</button>
+            <span id="pageInfo" class="page-info">Page 1</span>
+            <button id="nextBtn" class="pagination-btn">Next →</button>
+        </div>
+
+        <!-- Pokémon Detail Modal -->
+        <div id="pokemonModal" class="modal">
+            <div class="modal-content">
+                <button class="modal-close">&times;</button>
+                <div id="modalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

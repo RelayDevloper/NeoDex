@@ -1,0 +1,27 @@
+{
+  "name": "neodex-pokedex",
+  "version": "1.0.0",
+  "description": "A modern, visually impressive Pokédex website built with Node.js and PokeAPI",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "pokedex",
+    "pokemon",
+    "pokeapi",
+    "node.js",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
