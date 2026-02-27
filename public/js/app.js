@@ -14,6 +14,8 @@ class NeoDex {
     this.currentType = '';
     this.currentSort = 'id';
     this.currentSearch = '';
+    this.isShinyMode = false;
+    this.isLoadingMore = false;
 
     this.initializeElements();
     this.setupEventListeners();
@@ -37,6 +39,7 @@ class NeoDex {
     this.loadingIndicator = document.getElementById('loadingIndicator');
     this.favoritesBtn = document.getElementById('favoritesBtn');
     this.favoriteCount = document.getElementById('favoriteCount');
+    this.shinyToggle = document.getElementById('shinyToggle');
   }
 
   /**
@@ -53,6 +56,35 @@ class NeoDex {
     this.prevBtn.addEventListener('click', () => this.previousPage());
     this.nextBtn.addEventListener('click', () => this.nextPage());
     this.favoritesBtn.addEventListener('click', () => this.showFavorites());
+
+    if (this.shinyToggle) {
+      this.shinyToggle.addEventListener('click', () => this.toggleShinyMode());
+    }
+
+    window.addEventListener('scroll', () => this.handleScroll());
+
+    this.pokemonGrid.addEventListener('click', (e) => {
+      const favoriteBtn = e.target.closest('.favorite-btn');
+      const card = e.target.closest('.pokemon-card');
+
+      if (favoriteBtn) {
+        e.stopPropagation();
+        const index = parseInt(favoriteBtn.dataset.index, 10);
+        const pokemon = this.filteredPokemon[index];
+        if (pokemon) {
+          this.toggleFavorite(pokemon.id, favoriteBtn);
+        }
+        return;
+      }
+
+      if (card) {
+        const index = parseInt(card.dataset.index, 10);
+        const pokemon = this.filteredPokemon[index];
+        if (pokemon) {
+          this.showPokemonDetail(pokemon);
+        }
+      }
+    });
   }
 
   /**
@@ -133,7 +165,7 @@ class NeoDex {
     this.currentSearch = this.searchInput.value.toLowerCase();
     this.currentPage = 0;
     this.applyFiltersAndSort();
-    this.displayPage();
+    this.displayPage({ reset: true });
   }
 
   /**
@@ -143,7 +175,7 @@ class NeoDex {
     this.currentType = this.typeFilter.value;
     this.currentPage = 0;
     this.applyFiltersAndSort();
-    this.displayPage();
+    this.displayPage({ reset: true });
   }
 
   /**
@@ -152,7 +184,7 @@ class NeoDex {
   handleSort() {
     this.currentSort = this.sortSelect.value;
     this.applyFiltersAndSort();
-    this.displayPage();
+    this.displayPage({ reset: true });
   }
 
   /**
@@ -200,9 +232,14 @@ class NeoDex {
   }
 
   /**
-   * Display current page
+   * Display current page (supports infinite scroll)
    */
-  displayPage() {
+  displayPage({ reset = false } = {}) {
+    if (reset) {
+      this.pokemonGrid.innerHTML = '';
+      this.currentPage = 0;
+    }
+
     if (this.filteredPokemon.length === 0) {
       this.pokemonGrid.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
@@ -219,22 +256,16 @@ class NeoDex {
     const endIndex = startIndex + this.itemsPerPage;
     const pageItems = this.filteredPokemon.slice(startIndex, endIndex);
 
-    this.pokemonGrid.innerHTML = pageItems
-      .map(pokemon => this.createPokemonCard(pokemon))
+    if (pageItems.length === 0) {
+      this.updatePaginationButtons();
+      return;
+    }
+
+    const cardsHtml = pageItems
+      .map((pokemon, index) => this.createPokemonCard(pokemon, startIndex + index))
       .join('');
 
-    // Add click listeners to cards
-    document.querySelectorAll('.pokemon-card').forEach((card, index) => {
-      card.addEventListener('click', () => this.showPokemonDetail(pageItems[index]));
-    });
-
-    // Add favorite button listeners
-    document.querySelectorAll('.favorite-btn').forEach((btn, index) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.toggleFavorite(pageItems[index].id, btn);
-      });
-    });
+    this.pokemonGrid.insertAdjacentHTML('beforeend', cardsHtml);
 
     this.updatePageInfo();
   }
@@ -242,17 +273,18 @@ class NeoDex {
   /**
    * Create Pokémon card HTML
    */
-  createPokemonCard(pokemon) {
+  createPokemonCard(pokemon, index) {
     const isFavorited = this.favorites.includes(pokemon.id);
     const baseStats = pokemon.stats.reduce((sum, s) => sum + s.base_stat, 0);
+    const imageUrl = this.getPokemonImage(pokemon);
 
     return `
-      <div class="pokemon-card">
-        <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" title="Add to favorites">
+      <div class="pokemon-card" data-index="${index}">
+        <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" data-index="${index}" title="Add to favorites">
           ${isFavorited ? '⭐' : '☆'}
         </button>
         <div class="pokemon-id">#${String(pokemon.id).padStart(4, '0')}</div>
-        <img src="${pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default}" 
+        <img src="${imageUrl}" 
              alt="${pokemon.name}" class="pokemon-image">
         <h3 class="pokemon-name">${pokemon.name}</h3>
         <div class="pokemon-types">
@@ -265,6 +297,28 @@ class NeoDex {
         </div>
       </div>
     `;
+  }
+
+  /**
+   * Get appropriate Pokémon image based on shiny mode
+   */
+  getPokemonImage(pokemon) {
+    const sprites = pokemon.sprites || {};
+    const artwork = sprites.other && sprites.other['official-artwork'];
+
+    if (this.isShinyMode) {
+      return (
+        (artwork && (artwork.front_shiny || artwork.front_default)) ||
+        sprites.front_shiny ||
+        sprites.front_default
+      );
+    }
+
+    return (
+      (artwork && artwork.front_default) ||
+      sprites.front_default ||
+      sprites.front_shiny
+    );
   }
 
   /**
@@ -282,9 +336,15 @@ class NeoDex {
       const height = (fullData.height / 10).toFixed(1);
       const weight = (fullData.weight / 10).toFixed(1);
 
+      const mainImage = this.getPokemonImage(fullData);
+
+      const evolutionHtml = fullData.evolutionChain
+        ? this.createEvolutionChain(fullData.evolutionChain)
+        : '';
+
       this.modalBody.innerHTML = `
         <div class="modal-header">
-          <img src="${fullData.sprites.other['official-artwork'].front_default || fullData.sprites.front_default}" 
+          <img src="${mainImage}" 
                alt="${fullData.name}" class="modal-image">
           <div class="modal-info">
             <h2>${fullData.name}</h2>
@@ -326,6 +386,8 @@ class NeoDex {
           ${mainAbility ? `<div class="ability-item">${mainAbility.ability.name}</div>` : ''}
           ${hiddenAbility ? `<div class="ability-item hidden">${hiddenAbility.ability.name} <span class="hidden-label">(Hidden)</span></div>` : ''}
         </div>
+
+        ${evolutionHtml}
       `;
 
       this.modal.classList.add('active');
@@ -333,6 +395,55 @@ class NeoDex {
       console.error('Error loading Pokémon detail:', error);
       this.showError('Failed to load Pokémon details');
     }
+  }
+
+  /**
+   * Create evolution chain HTML
+   */
+  createEvolutionChain(evolutionChain) {
+    if (!evolutionChain || !Array.isArray(evolutionChain.stages) || evolutionChain.stages.length === 0) {
+      return '';
+    }
+
+    const stagesHtml = evolutionChain.stages
+      .map((stage, stageIndex) => {
+        const pokemonHtml = stage
+          .map((p) => {
+            const img =
+              (p.sprites && (p.sprites.artwork_default || p.sprites.front_default)) ||
+              '';
+            return `
+              <div class="evolution-pokemon">
+                ${img ? `<img src="${img}" alt="${p.name}" />` : ''}
+                <span class="evolution-name">${p.name}</span>
+              </div>
+            `;
+          })
+          .join('');
+
+        const arrow = stageIndex < evolutionChain.stages.length - 1
+          ? '<div class="evolution-arrow">➜</div>'
+          : '';
+
+        return `
+          <div class="evolution-stage-wrapper">
+            <div class="evolution-stage">
+              ${pokemonHtml}
+            </div>
+            ${arrow}
+          </div>
+        `;
+      })
+      .join('');
+
+    return `
+      <div class="evolution-section">
+        <h3>Evolution Chain</h3>
+        <div class="evolution-chain">
+          ${stagesHtml}
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -396,7 +507,7 @@ class NeoDex {
 
     this.filteredPokemon = this.allPokemon.filter(p => this.favorites.includes(p.id));
     this.currentPage = 0;
-    this.displayPage();
+    this.displayPage({ reset: true });
     this.favoritesBtn.textContent = `✓ Favorites (${this.favorites.length})`;
   }
 
@@ -436,7 +547,8 @@ class NeoDex {
    */
   updatePageInfo() {
     const maxPages = Math.ceil(this.filteredPokemon.length / this.itemsPerPage) || 1;
-    this.pageInfo.textContent = `Page ${this.currentPage + 1} of ${maxPages}`;
+    const shown = Math.min((this.currentPage + 1) * this.itemsPerPage, this.filteredPokemon.length);
+    this.pageInfo.textContent = `Showing ${shown} of ${this.filteredPokemon.length}`;
   }
 
   /**
@@ -457,9 +569,43 @@ class NeoDex {
   previousPage() {
     if (this.currentPage > 0) {
       this.currentPage--;
-      this.displayPage();
+      this.displayPage({ reset: true });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  /**
+   * Handle infinite scroll
+   */
+  handleScroll() {
+    if (this.isLoadingMore) return;
+
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 300;
+
+    if (scrollPosition >= threshold) {
+      const maxPages = Math.ceil(this.filteredPokemon.length / this.itemsPerPage);
+      if (this.currentPage < maxPages - 1) {
+        this.isLoadingMore = true;
+        this.currentPage++;
+        this.displayPage();
+        this.isLoadingMore = false;
+      }
+    }
+  }
+
+  /**
+   * Toggle shiny mode
+   */
+  toggleShinyMode() {
+    this.isShinyMode = !this.isShinyMode;
+
+    if (this.shinyToggle) {
+      this.shinyToggle.classList.toggle('active', this.isShinyMode);
+      this.shinyToggle.textContent = this.isShinyMode ? '✨ Shiny: On' : '✨ Shiny: Off';
+    }
+
+    this.displayPage({ reset: true });
   }
 
   /**

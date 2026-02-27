@@ -11,7 +11,8 @@ const BASE_URL = 'https://pokeapi.co/api/v2';
 const cache = {
   pokemon: {},
   types: {},
-  species: {}
+  species: {},
+  evolutionChains: {}
 };
 
 /**
@@ -132,11 +133,70 @@ async function getSpecies(nameOrId) {
   }
 }
 
+/**
+ * Fetch and parse evolution chain data
+ */
+async function getEvolutionChainByUrl(url) {
+  try {
+    if (!url) return null;
+
+    const match = url.match(/\/evolution-chain\/(\d+)\//);
+    const id = match ? match[1] : null;
+
+    if (!id) return null;
+
+    if (cache.evolutionChains[id]) {
+      return cache.evolutionChains[id];
+    }
+
+    const response = await axios.get(`${BASE_URL}/evolution-chain/${id}`);
+    const chain = response.data.chain;
+
+    const stages = [];
+    let currentStage = [chain];
+
+    while (currentStage.length) {
+      const detailedStage = await Promise.all(
+        currentStage.map(async (node) => {
+          const name = node.species.name;
+          const pokemon = await getPokemon(name);
+
+          return {
+            id: pokemon.id,
+            name: pokemon.name,
+            sprites: {
+              front_default: pokemon.sprites.front_default,
+              front_shiny: pokemon.sprites.front_shiny,
+              artwork_default: pokemon.sprites.other?.['official-artwork']?.front_default || null,
+              artwork_shiny: pokemon.sprites.other?.['official-artwork']?.front_shiny || null
+            }
+          };
+        })
+      );
+
+      stages.push(detailedStage);
+      currentStage = currentStage.flatMap(node => node.evolves_to);
+    }
+
+    const result = {
+      id: response.data.id,
+      stages
+    };
+
+    cache.evolutionChains[id] = result;
+    return result;
+  } catch (error) {
+    console.error('Error fetching evolution chain:', error.message);
+    return null;
+  }
+}
+
 module.exports = {
   getPokemon,
   getPokemonList,
   getTypes,
   getPokemonByType,
   searchPokemon,
-  getSpecies
+  getSpecies,
+  getEvolutionChainByUrl
 };

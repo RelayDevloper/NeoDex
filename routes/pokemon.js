@@ -11,7 +11,8 @@ const {
   getTypes,
   getPokemonByType,
   searchPokemon,
-  getSpecies
+  getSpecies,
+  getEvolutionChainByUrl
 } = require('../services/pokeapi');
 
 /**
@@ -38,10 +39,16 @@ router.get('/:id', async (req, res) => {
   try {
     const pokemon = await getPokemon(req.params.id);
     const species = await getSpecies(req.params.id);
+    let evolutionChain = null;
+
+    if (species && species.evolution_chain && species.evolution_chain.url) {
+      evolutionChain = await getEvolutionChainByUrl(species.evolution_chain.url);
+    }
     
     res.json({
       ...pokemon,
-      species: species
+      species: species,
+      evolutionChain
     });
   } catch (error) {
     res.status(404).json({ error: error.message });

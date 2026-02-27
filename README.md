@@ -210,9 +210,9 @@ This significantly reduces API calls and improves response times.
 
 ## 🔮 Future Improvements
 
-- [ ] Infinite scroll pagination
-- [ ] Shiny Pokémon toggle
-- [ ] Evolution chain visualization
+- [x] Infinite scroll pagination
+- [x] Shiny Pokémon toggle
+- [x] Evolution chain visualization
 - [ ] Move list and learnsets
 - [ ] Pokémon comparisons
 - [ ] Generation-based filtering

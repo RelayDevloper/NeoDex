@@ -229,6 +229,32 @@ body {
     box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
 }
 
+.toggle-btn {
+    padding: 10px 20px;
+    background: rgba(30, 41, 59, 0.8);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toggle-btn:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+.toggle-btn.active {
+    border-color: var(--accent-color);
+    background: rgba(236, 72, 153, 0.15);
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+}
+
 /* Loading Indicator */
 .loading-indicator {
     display: none;
@@ -626,9 +652,71 @@ body {
     margin-left: 5px;
 }
 
+/* Evolution Chain */
+.evolution-section {
+    margin: 24px 0 8px;
+    padding: 20px;
+    background: rgba(56, 189, 248, 0.08);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.evolution-section h3 {
+    color: var(--info-color);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+.evolution-chain {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.evolution-stage-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.evolution-stage {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.evolution-pokemon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.evolution-pokemon img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.4));
+    margin-bottom: 6px;
+}
+
+.evolution-name {
+    font-size: 0.8rem;
+    text-transform: capitalize;
+    color: var(--text-secondary);
+}
+
+.evolution-arrow {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
 /* Pagination */
 .pagination {
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     gap: 20px;
