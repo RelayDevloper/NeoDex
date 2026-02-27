@@ -213,6 +213,7 @@ This significantly reduces API calls and improves response times.
 - [x] Infinite scroll pagination
 - [x] Shiny Pokémon toggle
 - [x] Evolution chain visualization
+- [ ] Make The Loading Time Fast
 - [ ] Move list and learnsets
 - [ ] Pokémon comparisons
 - [ ] Generation-based filtering
