@@ -1,3 +1,5 @@
+![NeoDex Logo]()
+
 # 🎮 NeoDex - Modern Pokédex Website
 
 A visually stunning, feature-rich Pokédex web application built with **Node.js**, **Express.js**, and the **PokeAPI**. Browse, search, and explore Pokémon with an immersive dark-mode UI featuring glassmorphism design and smooth animations.
