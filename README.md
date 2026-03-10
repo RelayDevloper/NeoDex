@@ -1,4 +1,4 @@
-![NeoDex Logo]()
+![NeoDex Logo](NeoDex Logo.png)
 
 # 🎮 NeoDex - Modern Pokédex Website
 
